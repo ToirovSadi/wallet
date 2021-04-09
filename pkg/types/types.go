@@ -50,6 +50,14 @@ type Account struct {
 	Balance Money
 }
 
+type Favorite struct {
+	ID        string
+	AccountID int64
+	Name      string
+	Amount    Money
+	Category  PaymentCategory
+}
+
 type PaymentSource struct {
 	Type    string // "card"
 	Number  string // номер вида '5058 xxxx xxxx 8888
