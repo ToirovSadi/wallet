@@ -8,6 +8,8 @@ type Category string
 
 type Status string
 
+type Phone string
+
 const (
 	TJS Currency = "TJS"
 	RUB Currency = "RUB"
@@ -34,10 +36,17 @@ type Card struct {
 }
 
 type Payment struct {
-	ID       int
-	Amount   Money
-	Category Category
-	Status   Status
+	ID        int
+	AccountID int64
+	Amount    Money
+	Category  Category
+	Status    Status
+}
+
+type Account struct {
+	ID      int64
+	Phone   Phone
+	Balance Money
 }
 
 type PaymentSource struct {
