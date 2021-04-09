@@ -4,9 +4,9 @@ type Money int64
 
 type Currency string
 
-type Category string
+type PaymentCategory string
 
-type Status string
+type PaymentStatus string
 
 type Phone string
 
@@ -16,10 +16,11 @@ const (
 	USD Currency = "USD"
 )
 
+// status
 const (
-	StatusOk         Status = "OK"
-	StatusFail       Status = "FAIL"
-	StatusInProgress Status = "INPROGRESS"
+	PaymentStatusOk         PaymentStatus = "OK"
+	PaymentStatusFail       PaymentStatus = "FAIL"
+	PaymentStatusInProgress PaymentStatus = "INPROGRESS"
 )
 
 type PAN string
@@ -36,11 +37,11 @@ type Card struct {
 }
 
 type Payment struct {
-	ID        int
+	ID        string
 	AccountID int64
 	Amount    Money
-	Category  Category
-	Status    Status
+	Category  PaymentCategory
+	Status    PaymentStatus
 }
 
 type Account struct {

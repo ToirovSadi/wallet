@@ -1,6 +1,10 @@
 package wallet
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/ToirovSadi/wallet/pkg/types"
+)
 
 func TestService_FindAccountByID_success(t *testing.T) {
 
@@ -28,6 +32,44 @@ func TestService_FindAccountByID_notFound(t *testing.T) {
 
 }
 
+func TestService_FindPaymentByID(t *testing.T) {
+	svc := regAccounts()
+
+	payment, err := svc.Pay(1, 50, "internet")
+	if err != nil {
+		t.Error("error:TestService_FindPaymentByID(): ", err)
+	}
+	_, err = svc.FindPaymentByID(payment.ID)
+	if err != nil {
+		t.Error("error:TestService_FindPaymentByID(): ", err)
+	}
+	_, err = svc.FindPaymentByID("nothing")
+	if err == nil {
+		t.Error("error:TestService_FindPaymentByID(): find wrong payment :(")
+	}
+}
+
+func TestService_Reject(t *testing.T) {
+	svc := regAccounts()
+
+	// initial balance of account was 100
+	payment, err := svc.Pay(1, 50, "internet")
+	if err != nil {
+		t.Error("error:TestService_FindPaymentByID(): ", err)
+	}
+	err = svc.Reject(payment.ID)
+	if err != nil {
+		t.Error("error:TestService_Reject(): ", err)
+	}
+	if payment.Status != types.PaymentStatusFail {
+		t.Error("error:TestService_Reject(): payment status didn't changed")
+	}
+	account, _ := svc.FindAccountByID(1)
+	if account.Balance != 100 {
+		t.Error("error:TestService_Reject(): Reject not working")
+	}
+}
+
 func regAccounts() *Service {
 	svc := &Service{}
 
@@ -35,9 +77,23 @@ func regAccounts() *Service {
 	svc.RegisterAccount("2")
 	svc.RegisterAccount("3")
 	svc.RegisterAccount("4")
+	svc.Deposit(1, 100)
+	svc.Deposit(2, 100)
+	// test for Service.Deposit
+	account, _ := svc.FindAccountByID(1)
+	if account.Balance != 100 {
+		panic("error:regAccounts():Service.Deposit dosit not working(")
+	}
 
-	/// lets test Service.RegisterAccount
-	_, err := svc.RegisterAccount("1")
+	// test for Service.Pay
+	_, err := svc.Pay(1, 50, "internet")
+	if err != nil {
+		panic("error:regAccounts():Service.Pay can't withdraw money")
+	}
+	svc.Deposit(1, 50)
+
+	/// test for Service.RegisterAccount
+	_, err = svc.RegisterAccount("1")
 	if err == nil {
 		panic("error:regAccounts():Service.RegisterAccount can't match by phone!")
 	}

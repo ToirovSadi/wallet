@@ -4,12 +4,13 @@ import (
 	"errors"
 
 	"github.com/ToirovSadi/wallet/pkg/types"
+	"github.com/google/uuid"
 )
 
 type Service struct {
 	nextAccountID int64
 	accounts      []*types.Account
-	// payments      []*types.Payment
+	payments      []*types.Payment
 }
 
 func (s *Service) RegisterAccount(phone types.Phone) (*types.Account, error) {
@@ -37,7 +38,72 @@ func (s *Service) FindAccountByID(accountID int64) (*types.Account, error) {
 	return nil, ErrAccountNotFound
 }
 
+func (s *Service) Reject(paymentID string) error {
+	payment, err := s.FindPaymentByID(paymentID)
+	if err != nil {
+		return err
+	}
+	payment.Status = types.PaymentStatusFail
+	account, err := s.FindAccountByID(payment.AccountID)
+	if err != nil {
+		return err
+	}
+	account.Balance += payment.Amount
+	return nil
+}
+
+func (s *Service) FindPaymentByID(paymentID string) (*types.Payment, error) {
+	for _, payment := range s.payments {
+		if payment.ID == paymentID {
+			return payment, nil
+		}
+	}
+	return nil, ErrPaymentNotFound
+}
+
+func (s *Service) Pay(accountID int64, amount types.Money, category types.PaymentCategory) (*types.Payment, error) {
+	if amount <= 0 {
+		return nil, ErrAmountMustBePositive
+	}
+
+	account, err := s.FindAccountByID(accountID)
+	if err != nil {
+		return nil, err
+	}
+
+	if account.Balance < amount {
+		return nil, ErrNotEnoughBalance
+	}
+
+	account.Balance -= amount
+
+	paymentID := uuid.New().String()
+	payment := &types.Payment{
+		ID:        paymentID,
+		AccountID: accountID,
+		Amount:    amount,
+		Category:  category,
+		Status:    types.PaymentStatusInProgress,
+	}
+	s.payments = append(s.payments, payment)
+	return payment, nil
+}
+
+func (s *Service) Deposit(accountID int64, amount types.Money) error {
+	if amount <= 0 {
+		return ErrAmountMustBePositive
+	}
+	account, err := s.FindAccountByID(accountID)
+	if err != nil {
+		return err
+	}
+	account.Balance += amount
+	return nil
+}
+
 // Errors that can occur in these functions
 var ErrAccountNotFound = errors.New("account that you want doesn't exist")
 var ErrPhoneRegistred = errors.New("phone already registred")
 var ErrAmountMustBePositive = errors.New("amount must be greater than zero")
+var ErrNotEnoughBalance = errors.New("not enough balance")
+var ErrPaymentNotFound = errors.New("payment that you asked not found")
