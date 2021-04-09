@@ -65,8 +65,25 @@ func TestService_Reject(t *testing.T) {
 		t.Error("error:TestService_Reject(): payment status didn't changed")
 	}
 	account, _ := svc.FindAccountByID(1)
-	if account.Balance != 100 {
+	if account.Balance != 50 {
 		t.Error("error:TestService_Reject(): Reject not working")
+	}
+}
+
+func TestService_Repeat(t *testing.T) {
+	svc := regAccounts()
+
+	payment, _ := svc.Pay(2, 50, "nothing")
+	newPayment, err := svc.Repeat(payment.ID)
+	if err != nil {
+		t.Error("error:TestService_Repeat(): ", err)
+	}
+	account, err := svc.FindAccountByID(payment.AccountID)
+	if err != nil {
+		t.Error("error:TestService_Repeat(): ", err)
+	}
+	if account.Balance != (100 - payment.Amount - newPayment.Amount) {
+		t.Error("error:TestService_Repeat(): Repeat function not working")
 	}
 }
 
@@ -90,7 +107,6 @@ func regAccounts() *Service {
 	if err != nil {
 		panic("error:regAccounts():Service.Pay can't withdraw money")
 	}
-	svc.Deposit(1, 50)
 
 	/// test for Service.RegisterAccount
 	_, err = svc.RegisterAccount("1")
