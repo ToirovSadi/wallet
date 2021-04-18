@@ -2,6 +2,8 @@ package wallet
 
 import (
 	"errors"
+	"os"
+	"strconv"
 
 	"github.com/ToirovSadi/wallet/pkg/types"
 	"github.com/google/uuid"
@@ -149,6 +151,29 @@ func (s *Service) Deposit(accountID int64, amount types.Money) error {
 		return err
 	}
 	account.Balance += amount
+	return nil
+}
+
+func (s *Service) ExportToFile(path string) (err error) {
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err1 := file.Close()
+		if err1 != nil {
+			err = err1
+		}
+	}()
+	for _, account := range s.accounts {
+		id := strconv.FormatInt(account.ID, 10)
+		phone := string(account.Phone)
+		balance := strconv.FormatInt(int64(account.Balance), 10)
+		_, err := file.Write([]byte(id + ";" + phone + ";" + balance + "|"))
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
