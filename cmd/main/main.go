@@ -11,14 +11,20 @@ func main() {
 
 	s := wallet.Service{}
 
-	s.RegisterAccount("+1")
-	s.RegisterAccount("+2")
-	s.RegisterAccount("+3")
-
-	err := s.ExportToFile(path)
+	err := s.ImportFromFile(path)
 	if err != nil {
 		log.Println(err)
 		return
+	}
+
+	for i := 1; i <= int(s.NumAccount()); i++ {
+		account, err := s.FindAccountByID(int64(i))
+		if err != nil {
+			log.Print(err)
+			return
+		}
+		log.Printf("%#v\n", account)
+
 	}
 
 	log.Println("all done!")
