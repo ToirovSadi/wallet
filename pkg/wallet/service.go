@@ -2,8 +2,11 @@ package wallet
 
 import (
 	"errors"
+	"io"
 	"os"
+	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/ToirovSadi/wallet/pkg/types"
 	"github.com/google/uuid"
@@ -177,6 +180,84 @@ func (s *Service) ExportToFile(path string) (err error) {
 	return nil
 }
 
+type ByID []types.Account
+
+func (a ByID) Len() int {
+	return len(a)
+}
+func (a ByID) Swap(i int, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a ByID) Less(i int, j int) bool {
+	return (a[i].ID < a[j].ID)
+}
+
+func (s *Service) ImportFromFile(path string) (err error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err1 := file.Close()
+		if err1 != nil {
+			err = err1
+		}
+	}()
+
+	buf := make([]byte, 4096)
+	data := make([]byte, 0)
+	for {
+		nread, err := file.Read(buf)
+		if err == io.EOF {
+			data = append(data, buf[:nread]...)
+			break
+		}
+		if err != nil {
+			return err
+		}
+		data = append(data, buf[:nread]...)
+	}
+
+	accountsDel := strings.Split(string(data), "|")
+
+	var accounts []types.Account
+	for _, account := range accountsDel {
+		if len(account) == 0 { // empty
+			continue
+		}
+		parts := strings.Split(account, ";")
+		if len(parts) != 3 {
+			return errors.New("error:ImportFromFile(): account contains of three parts(id, phone, balance)")
+		}
+		id, err := strconv.ParseInt(parts[0], 10, 64)
+		if err != nil {
+			return err
+		}
+		phone := parts[1]
+		balance, err := strconv.ParseInt(parts[2], 10, 64)
+		if err != nil {
+			return err
+		}
+		accounts = append(accounts, types.Account{
+			ID:      id,
+			Phone:   types.Phone(phone),
+			Balance: types.Money(balance),
+		})
+	}
+	sort.Sort(ByID(accounts))
+
+	for _, account := range accounts {
+		s.accounts = append(s.accounts, &types.Account{
+			ID:      account.ID,
+			Phone:   account.Phone,
+			Balance: account.Balance,
+		})
+	}
+
+	return nil
+}
+
 // Errors that can occur in these functions
 var ErrAccountNotFound = errors.New("account that you want doesn't exist")
 var ErrPhoneRegistred = errors.New("phone already registred")
@@ -184,3 +265,7 @@ var ErrAmountMustBePositive = errors.New("amount must be greater than zero")
 var ErrNotEnoughBalance = errors.New("not enough balance")
 var ErrPaymentNotFound = errors.New("payment that you asked not found")
 var ErrFavoriteNotFound = errors.New("favorite payment that you ask not found")
+
+func (s *Service) NumAccount() int {
+	return len(s.accounts)
+}
