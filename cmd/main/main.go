@@ -1,31 +1,46 @@
 package main
 
 import (
-	"log"
-
 	"github.com/ToirovSadi/wallet/pkg/wallet"
+	"log"
 )
 
 func main() {
-	path := "data/file1.txt"
-
 	s := wallet.Service{}
 
-	err := s.ImportFromFile(path)
-	if err != nil {
-		log.Println(err)
+	account, err := s.RegisterAccount("+9921231234")
+	if err != nil{
+		log.Print(err)
 		return
 	}
 
-	for i := 1; i <= int(s.NumAccount()); i++ {
-		account, err := s.FindAccountByID(int64(i))
-		if err != nil {
+	err = s.Deposit(account.ID, 1000000)
+	if err != nil{
+		log.Print(err)
+		return
+	}
+
+	for i := 0; i < 15; i ++{
+		payment, err := s.Pay(account.ID, 5, "hichi")
+
+		if err != nil{
 			log.Print(err)
 			return
 		}
-		log.Printf("%#v\n", account)
-
+		if i % 3 == 0{
+			_, err = s.FavoritePayment(payment.ID, "nothing")
+			if err != nil{
+				log.Print(err)
+				return
+			}
+		}
 	}
 
-	log.Println("all done!")
+	err = s.Export("./data")
+	if err != nil{
+		log.Print(err)
+		return
+	}
+
+	log.Print("Done!!!")
 }
