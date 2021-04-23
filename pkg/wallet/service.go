@@ -17,14 +17,14 @@ func (s *Service) Import(dir string) (err error) {
 }
 
 func (s *Service) Export(dir string) (err error) {
-	err = s.exportAccounts(dir + "\\accounts.dump")
+	err = s.exportAccounts(dir + "/accounts.dump")
 	if err != nil {
 		return err
 	}
-	err = s.exportPayments(dir + "\\payments.dump")
+	err = s.exportPayments(dir + "/payments.dump")
 	if err != nil {
 		return err
 	}
-	err = s.exportFavorites(dir + "\\favorites.dump")
+	err = s.exportFavorites(dir + "/favorites.dump")
 	return err
 }
