@@ -190,7 +190,7 @@ func (a ByID) Swap(i int, j int) {
 }
 
 func (a ByID) Less(i int, j int) bool {
-	return (a[i].ID < a[j].ID)
+	return a[i].ID < a[j].ID
 }
 
 func (s *Service) ImportFromFile(path string) (err error) {
@@ -256,6 +256,121 @@ func (s *Service) ImportFromFile(path string) (err error) {
 	}
 
 	return nil
+}
+
+func (s *Service)Export(dir string) (err error) {
+	err = exportAccounts(s.accounts, dir + "\\accounts.dump")
+	if err != nil{
+		return err
+	}
+	err = exportPayments(s.payments, dir + "\\payments.dump")
+	if err != nil{
+		return err
+	}
+	err = exportFavorites(s.favorites, dir + "\\favorites.dump")
+	return err
+}
+
+// Export accounts to indicated file
+func exportAccounts(accounts []*types.Account, fileName string) (err error) {
+	if len(accounts) == 0{
+		return nil
+	}
+
+	file, err := os.Create(fileName)
+	if err != nil{
+		return err
+	}
+	defer func(){
+		cerr := file.Close()
+		if err == nil{
+			err = cerr
+		}
+	}()
+
+	for _, account := range accounts{
+		id := strconv.FormatInt(account.ID, 10)
+		phone := string(account.Phone)
+		balance := strconv.FormatInt(int64(account.Balance), 10)
+		_, err := file.Write([]byte(getString(id, phone, balance)))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Export payments to indicated file
+func exportPayments(payments []*types.Payment, fileName string) (err error) {
+	if len(payments) == 0{
+		return nil
+	}
+
+	file, err := os.Create(fileName)
+	if err != nil{
+		return err
+	}
+	defer func(){
+		cerr := file.Close()
+		if err == nil{
+			err = cerr
+		}
+	}()
+
+	for _, payment := range payments{
+		id := payment.ID
+		accountID := strconv.FormatInt(payment.AccountID, 10)
+		amount := strconv.FormatInt(int64(payment.Amount), 10)
+		category := string(payment.Category)
+		status := string(payment.Status)
+		_, err := file.Write([]byte(getString(id, accountID, amount, category, status)))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Export payments to indicated file
+func exportFavorites(favorites []*types.Favorite, fileName string) (err error) {
+	if len(favorites) == 0{
+		return nil
+	}
+
+	file, err := os.Create(fileName)
+	if err != nil{
+		return err
+	}
+	defer func(){
+		cerr := file.Close()
+		if err == nil{
+			err = cerr
+		}
+	}()
+
+	for _, favorite := range favorites{
+		id := favorite.ID
+		accountID := strconv.FormatInt(favorite.AccountID, 10)
+		name := favorite.Name
+		amount := strconv.FormatInt(int64(favorite.Amount), 10)
+		category := string(favorite.Category)
+		_, err := file.Write([]byte(getString(id, accountID, name, amount, category)))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func getString(data ...string) (res string) {
+	for i := 0; i < len(data); i ++{
+		res += data[i]
+		if i == (len(data) - 1){
+			continue
+		}
+		res += ";"
+	}
+	return res + "|"
 }
 
 // Errors that can occur in these functions
