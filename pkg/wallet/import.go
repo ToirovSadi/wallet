@@ -117,6 +117,7 @@ func (s *Service) importAccounts(fileName string) error {
 		if err != nil {
 			return err
 		}
+
 		accountsNotSorted = append(accountsNotSorted, types.Account{
 			ID:      id,
 			Phone:   phone,
@@ -134,7 +135,11 @@ func (s *Service) importAccounts(fileName string) error {
 		if s.nextAccountID < account.ID {
 			s.nextAccountID = account.ID
 		}
-		s.accounts = append(s.accounts, &account)
+		s.accounts = append(s.accounts, &types.Account{
+			ID:      account.ID,
+			Phone:   account.Phone,
+			Balance: account.Balance,
+		})
 	}
 	return nil
 }

@@ -1,7 +1,6 @@
 package wallet
 
 import (
-	"github.com/ToirovSadi/wallet/pkg/types"
 	"os"
 	"strconv"
 )
@@ -30,8 +29,8 @@ func (s *Service) ExportToFile(path string) (err error) {
 }
 
 // Export accounts to indicated file
-func exportAccounts(accounts []*types.Account, fileName string) (err error) {
-	if len(accounts) == 0 {
+func (s *Service) exportAccounts(fileName string) (err error) {
+	if len(s.accounts) == 0 {
 		return nil
 	}
 
@@ -46,7 +45,7 @@ func exportAccounts(accounts []*types.Account, fileName string) (err error) {
 		}
 	}()
 
-	for _, account := range accounts {
+	for _, account := range s.accounts {
 		id := strconv.FormatInt(account.ID, 10)
 		phone := string(account.Phone)
 		balance := strconv.FormatInt(int64(account.Balance), 10)
@@ -59,8 +58,8 @@ func exportAccounts(accounts []*types.Account, fileName string) (err error) {
 }
 
 // Export payments to indicated file
-func exportPayments(payments []*types.Payment, fileName string) (err error) {
-	if len(payments) == 0 {
+func (s *Service) exportPayments(fileName string) (err error) {
+	if len(s.payments) == 0 {
 		return nil
 	}
 
@@ -75,7 +74,7 @@ func exportPayments(payments []*types.Payment, fileName string) (err error) {
 		}
 	}()
 
-	for _, payment := range payments {
+	for _, payment := range s.payments {
 		id := payment.ID
 		accountID := strconv.FormatInt(payment.AccountID, 10)
 		amount := strconv.FormatInt(int64(payment.Amount), 10)
@@ -90,8 +89,8 @@ func exportPayments(payments []*types.Payment, fileName string) (err error) {
 }
 
 // Export payments to indicated file
-func exportFavorites(favorites []*types.Favorite, fileName string) (err error) {
-	if len(favorites) == 0 {
+func (s *Service) exportFavorites(fileName string) (err error) {
+	if len(s.favorites) == 0 {
 		return nil
 	}
 
@@ -106,7 +105,7 @@ func exportFavorites(favorites []*types.Favorite, fileName string) (err error) {
 		}
 	}()
 
-	for _, favorite := range favorites {
+	for _, favorite := range s.favorites {
 		id := favorite.ID
 		accountID := strconv.FormatInt(favorite.AccountID, 10)
 		name := favorite.Name
