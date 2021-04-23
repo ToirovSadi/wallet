@@ -1,16 +1,15 @@
 package wallet
 
 func (s *Service) Import(dir string) (err error) {
-	err = s.importAccounts(dir + "\\accounts.dump")
+	err = s.importAccounts(dir + "/accounts.dump")
 	if err != nil {
 		return err
 	}
-
-	err = s.importPayments(dir + "\\payments.dump")
+	err = s.importPayments(dir + "/payments.dump")
 	if err != nil {
 		return err
 	}
-	err = s.importFavorites(dir + "\\favorites.dump")
+	err = s.importFavorites(dir + "/favorites.dump")
 	if err != nil {
 		return err
 	}
