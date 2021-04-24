@@ -11,6 +11,22 @@ import (
 	"strings"
 )
 
+func (s *Service) Import(dir string) (err error) {
+	err = s.importAccounts(dir + "/accounts.dump")
+	if err != nil {
+		return err
+	}
+	err = s.importPayments(dir + "/payments.dump")
+	if err != nil {
+		return err
+	}
+	err = s.importFavorites(dir + "/favorites.dump")
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 func (s *Service) ImportFromFile(path string) (err error) {
 	file, err := os.Open(path)
 	if err != nil {

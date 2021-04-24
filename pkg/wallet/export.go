@@ -5,6 +5,19 @@ import (
 	"strconv"
 )
 
+func (s *Service) Export(dir string) (err error) {
+	err = s.exportAccounts(dir + "/accounts.dump")
+	if err != nil {
+		return err
+	}
+	err = s.exportPayments(dir + "/payments.dump")
+	if err != nil {
+		return err
+	}
+	err = s.exportFavorites(dir + "/favorites.dump")
+	return err
+}
+
 func (s *Service) ExportToFile(path string) (err error) {
 	file, err := os.Create(path)
 	if err != nil {
