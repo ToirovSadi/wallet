@@ -1,7 +1,6 @@
 package wallet
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/ToirovSadi/wallet/pkg/types"
@@ -88,94 +87,6 @@ func TestService_FindPaymentByID(t *testing.T) {
 	}
 }
 
-func TestService_Reject(t *testing.T) {
-	svc := newTestService()
-	_, _, err := svc.addAccount(defaultTestAccount)
-	if err != nil {
-		t.Error("error:TestService_FindPaymentByID(): ", err)
-	}
-
-	accountBeforePay, err := svc.FindAccountByID(1)
-	if err != nil {
-		t.Error("error:TestService_FindPaymentByID(): ", err)
-	}
-	payment, err := svc.Pay(1, 50, "internet")
-	if err != nil {
-		t.Error("error:TestService_FindPaymentByID(): ", err)
-	}
-	err = svc.Reject(payment.ID)
-	if err != nil {
-		t.Error("error:TestService_Reject(): ", err)
-	}
-	if payment.Status != types.PaymentStatusFail {
-		t.Error("error:TestService_Reject(): payment status didn't changed")
-	}
-	account, _ := svc.FindAccountByID(1)
-	if account.Balance != accountBeforePay.Balance {
-		t.Error("error:TestService_Reject(): Reject not working")
-	}
-}
-
-func TestService_Repeat(t *testing.T) {
-	svc := newTestService()
-	account, payments, err := svc.addAccount(defaultTestAccount)
-	if err != nil {
-		t.Error("error:TestService_Repeat(): ", err)
-	}
-
-	_, err = svc.Repeat(payments[0].ID)
-	if err != nil {
-		t.Error("error:TestService_Repeat(): ", err)
-	}
-	if account.Balance != (defaultTestAccount.balance - 2*payments[0].Amount) {
-		t.Error("error:TestService_Repeat(): Repeat function not working")
-	}
-}
-
-func TestService_FavoritePayment(t *testing.T) {
-	s := newTestService()
-	_, payments, err := s.addAccount(defaultTestAccount)
-	if err != nil {
-		t.Error("error:TestService_FavoritePayment(): ", err)
-	}
-	favorite, err := s.FavoritePayment(payments[0].ID, "just for checking")
-	if err != nil {
-		t.Error("error:TestService_FavoritePayment(): ", err)
-	}
-	tempFavorite, err := s.FindFavoriteByID(favorite.ID)
-	if err != nil {
-		t.Error("error:TestService_FavoritePayment(): ", err)
-	}
-	if !reflect.DeepEqual(favorite, tempFavorite) {
-		t.Errorf("error:TestService_FavoritePayment():\ngot:%v\nwant:%v\n", tempFavorite, favorite)
-	}
-	_, err = s.FindFavoriteByID("nothing")
-	if err == nil {
-		t.Error("error:TestService_FavoritePayment(): find non-existent favorite payment")
-	}
-}
-
-func TestService_PayFromFavorite(t *testing.T) {
-	s := newTestService()
-	account, payments, err := s.addAccount(defaultTestAccount)
-	if err != nil {
-		t.Error("error:TestService_FavoritePayment(): ", err)
-	}
-	accountBeforePay := *account
-	favorite, err := s.FavoritePayment(payments[0].ID, "just for checking")
-	if err != nil {
-		t.Error("error:TestService_FavoritePayment(): ", err)
-	}
-	payment, err := s.PayFromFavorite(favorite.ID)
-	if err != nil {
-		t.Error("error:TestService_FavoritePayment(): ", err)
-	}
-
-	if (accountBeforePay.Balance - payment.Amount) != account.Balance {
-		t.Error("error:TestService_FavoritePayment(): PayFromFavorite not working")
-	}
-}
-
 // func regAccounts() *Service {
 // 	svc := &Service{}
 
@@ -251,4 +162,25 @@ func (s *testService) addAccount(data testAccount) (*types.Account, []*types.Pay
 		}
 	}
 	return account, payments, nil
+}
+
+func TestService_SumPayments(t *testing.T) {
+	s := Service{}
+	res := types.Money(0)
+	for i := 0; i < 100; i++ {
+		s.payments = append(s.payments, &types.Payment{
+			AccountID: 1,
+			Amount:    10,
+		})
+		res += 10
+	}
+	sum := s.SumPayments(10)
+	if res != sum {
+		t.Fatalf("want: %v\n, got: %v\n", res, sum)
+	}
+
+	sum = s.SumPayments(1)
+	if sum != res {
+		t.Fatalf("want: %v\n, got: %v\n", res, sum)
+	}
 }
