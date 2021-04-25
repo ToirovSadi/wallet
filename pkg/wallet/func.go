@@ -135,3 +135,18 @@ func (s *Service) ExistFile(path string) (bool, error) {
 	}
 	return false, err
 }
+
+// getN - devide n into m equal parts
+func DelN(n int, m int) []int {
+	a := []int{}
+	if m == 0 {
+		panic("you can't devide intiger by zero")
+	}
+	for i := 1; i <= n/m; i++ {
+		a = append(a, i*m)
+	}
+	if n%m != 0 {
+		a = append(a, n)
+	}
+	return a
+}

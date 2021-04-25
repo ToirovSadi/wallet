@@ -3,6 +3,7 @@ package wallet
 import (
 	"github.com/ToirovSadi/wallet/pkg/types"
 	"strconv"
+	"sync"
 )
 
 func (s *Service) ExportAccountHistory(accountID int64) ([]*types.Payment, error) {
@@ -50,4 +51,34 @@ func (s *Service) HistoryToFiles(payments []*types.Payment, dir string, records 
 		}
 	}
 	return nil
+}
+
+func (s *Service) SumPayments(goroutines int) types.Money {
+	var sumPayments types.Money = 0
+	if goroutines <= 1 {
+		for _, payment := range s.payments {
+			sumPayments += payment.Amount
+		}
+	} else {
+		l := 0
+		mu := sync.Mutex{}
+		n := len(s.payments)
+		wg := sync.WaitGroup{}
+		wg.Add((n + goroutines - 1) / goroutines)
+		for _, r := range DelN(n, goroutines) {
+			go func(payments []*types.Payment) {
+				defer wg.Done()
+				var sum types.Money = 0
+				for _, payment := range payments {
+					sum += payment.Amount
+				}
+				mu.Lock()
+				sumPayments += sum
+				mu.Unlock()
+			}(s.payments[l:r])
+			l = r
+		}
+		wg.Wait()
+	}
+	return sumPayments
 }
