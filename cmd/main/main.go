@@ -7,22 +7,31 @@ import (
 )
 
 func main() {
-	s := wallet.Service{}
 
-	fmt.Println("accounts are:")
-	for _, account := range s.GetAccounts() {
-		fmt.Printf("%+v\n", account)
+	l := 0
+	for _, x := range wallet.DelN(10, 3) {
+		fmt.Print("[", l, ", ", x, ")\n")
+		l = x
 	}
-	err := s.Import("./data")
-	if err != nil {
-		log.Print(err)
-		return
-	}
+	fmt.Println()
 
-	fmt.Println("accounts are:")
-	for _, account := range s.GetAccounts() {
-		fmt.Printf("%+v\n", *account)
-	}
+	//
+	//s := wallet.Service{}
+	//
+	//fmt.Println("accounts are:")
+	//for _, account := range s.GetAccounts() {
+	//	fmt.Printf("%+v\n", account)
+	//}
+	//err := s.Import("./data")
+	//if err != nil {
+	//	log.Print(err)
+	//	return
+	//}
+	//
+	//fmt.Println("accounts are:")
+	//for _, account := range s.GetAccounts() {
+	//	fmt.Printf("%+v\n", *account)
+	//}
 
 	//fmt.Println("payments are:")
 	//for _, payment := range s.GetPayments(){
