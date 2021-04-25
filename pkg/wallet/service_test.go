@@ -7,6 +7,30 @@ import (
 	"github.com/ToirovSadi/wallet/pkg/types"
 )
 
+func BenchmarkService_SumPayments(b *testing.B) {
+	s := Service{}
+	for i := 0; i < 1000; i++ {
+		s.payments = append(s.payments, &types.Payment{
+			AccountID: int64(i),
+			Amount:    5,
+		})
+	}
+	op_per_go := 5
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		got := s.SumPayments(len(s.payments) / op_per_go)
+		b.StopTimer()
+		want := types.Money(0)
+		for _, payment := range s.payments {
+			want += payment.Amount
+		}
+		if got != want {
+			b.Fatalf("error:\ngot: %v\nwant: %v\n", got, want)
+		}
+		b.StartTimer()
+	}
+}
+
 func TestService_FindAccountByID_success(t *testing.T) {
 
 	svc := &Service{}
