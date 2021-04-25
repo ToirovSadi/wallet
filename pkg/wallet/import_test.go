@@ -30,7 +30,7 @@ func TestService_Import(t *testing.T) {
 				favorites:     favorites,
 			},
 			args: args{
-				dir: "../../data",
+				dir: "./data",
 			},
 			wantErr: false,
 		},
@@ -75,7 +75,7 @@ func TestService_ImportFromFile(t *testing.T) {
 				favorites:     favorites,
 			},
 			args: args{
-				path: "../../data/accounts.dump",
+				path: "./accounts.dump",
 			},
 			wantErr: false,
 		},
