@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/ToirovSadi/wallet/pkg/types"
@@ -182,5 +183,89 @@ func TestService_SumPayments(t *testing.T) {
 	sum = s.SumPayments(1)
 	if sum != res {
 		t.Fatalf("want: %v\n, got: %v\n", res, sum)
+	}
+}
+
+func TestService_FilterPayments(t *testing.T) {
+	type fields struct {
+		nextAccountID int64
+		accounts      []*types.Account
+		payments      []*types.Payment
+		favorites     []*types.Favorite
+	}
+	type args struct {
+		accountID  int64
+		goroutines int
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []types.Payment
+		wantErr bool
+	}{
+		{
+			name: "test1",
+			fields: fields{
+				nextAccountID: 4,
+				accounts:      accounts,
+				payments:      payments,
+				favorites:     favorites,
+			},
+			args: args{
+				accountID:  1,
+				goroutines: 2,
+			},
+			want:    []types.Payment{*payments[0]},
+			wantErr: false,
+		},
+		{
+			name: "test2",
+			fields: fields{
+				nextAccountID: 4,
+				accounts:      accounts,
+				payments:      payments,
+				favorites:     favorites,
+			},
+			args: args{
+				accountID:  10,
+				goroutines: 2,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "test3",
+			fields: fields{
+				nextAccountID: 4,
+				accounts:      accounts,
+				payments:      payments,
+				favorites:     favorites,
+			},
+			args: args{
+				accountID:  10,
+				goroutines: 1,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Service{
+				nextAccountID: tt.fields.nextAccountID,
+				accounts:      tt.fields.accounts,
+				payments:      tt.fields.payments,
+				favorites:     tt.fields.favorites,
+			}
+			got, err := s.FilterPayments(tt.args.accountID, tt.args.goroutines)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FilterPayments() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("FilterPayments() got = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
