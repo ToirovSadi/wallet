@@ -30,7 +30,7 @@ func TestService_Export(t *testing.T) {
 				favorites:     favorites,
 			},
 			args: args{
-				dir: "../../data",
+				dir: ".",
 			},
 			wantErr: false,
 		},
@@ -75,7 +75,7 @@ func TestService_ExportToFile(t *testing.T) {
 				favorites:     favorites,
 			},
 			args: args{
-				path: "../../data/accounts.dump",
+				path: "./accounts.dump",
 			},
 			wantErr: false,
 		},
