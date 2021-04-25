@@ -72,3 +72,42 @@ func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payme
 	}
 	return resPayments, nil
 }
+
+func (s *Service) FilterPaymentsByFn(
+	filter func(payment types.Payment) bool,
+	goroutines int) ([]types.Payment, error) {
+	var resPayments []types.Payment
+	if goroutines <= 1 {
+		for _, payment := range s.payments {
+			if filter(*payment) {
+				resPayments = append(resPayments, *payment)
+			}
+		}
+	} else {
+		l := 0
+		mu := sync.Mutex{}
+		n := len(s.payments)
+		wg := sync.WaitGroup{}
+		wg.Add((n + goroutines - 1) / goroutines)
+		for _, r := range DelN(n, goroutines) {
+			go func(payments []*types.Payment) {
+				defer wg.Done()
+				var tempPayments []types.Payment
+				for _, payment := range payments {
+					if filter(*payment) {
+						tempPayments = append(tempPayments, *payment)
+					}
+				}
+				mu.Lock()
+				resPayments = append(resPayments, tempPayments...)
+				mu.Unlock()
+			}(s.payments[l:r])
+			l = r
+		}
+		wg.Wait()
+	}
+	if resPayments == nil {
+		return nil, ErrPaymentNotFound
+	}
+	return resPayments, nil
+}

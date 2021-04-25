@@ -269,3 +269,95 @@ func TestService_FilterPayments(t *testing.T) {
 		})
 	}
 }
+
+func filter(payment types.Payment) bool {
+	return payment.AccountID == 1
+}
+
+func TestService_FilterPaymentsByFn(t *testing.T) {
+	type fields struct {
+		nextAccountID int64
+		accounts      []*types.Account
+		payments      []*types.Payment
+		favorites     []*types.Favorite
+	}
+	type args struct {
+		filter     func(payment types.Payment) bool
+		goroutines int
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []types.Payment
+		wantErr bool
+	}{
+		{
+			name: "test1",
+			fields: fields{
+				nextAccountID: 4,
+				accounts:      accounts,
+				payments:      payments,
+				favorites:     favorites,
+			},
+			args: args{
+				filter:     filter,
+				goroutines: 2,
+			},
+			want:    []types.Payment{*payments[0]},
+			wantErr: false,
+		},
+		{
+			name: "test2",
+			fields: fields{
+				nextAccountID: 4,
+				accounts:      accounts,
+				payments:      payments,
+				favorites:     favorites,
+			},
+			args: args{
+				filter: func(payment types.Payment) bool {
+					return payment.AccountID == 10
+				},
+				goroutines: 2,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "test3",
+			fields: fields{
+				nextAccountID: 4,
+				accounts:      accounts,
+				payments:      payments,
+				favorites:     favorites,
+			},
+			args: args{
+				filter: func(payment types.Payment) bool {
+					return payment.AccountID == 10
+				},
+				goroutines: 1,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Service{
+				nextAccountID: tt.fields.nextAccountID,
+				accounts:      tt.fields.accounts,
+				payments:      tt.fields.payments,
+				favorites:     tt.fields.favorites,
+			}
+			got, err := s.FilterPaymentsByFn(tt.args.filter, tt.args.goroutines)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FilterPaymentsByFn() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("FilterPaymentsByFn() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
