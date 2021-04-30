@@ -58,6 +58,11 @@ type Favorite struct {
 	Category  PaymentCategory
 }
 
+type Progress struct {
+	Part   int
+	Result Money
+}
+
 type PaymentSource struct {
 	Type    string // "card"
 	Number  string // номер вида '5058 xxxx xxxx 8888

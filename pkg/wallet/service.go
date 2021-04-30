@@ -5,109 +5,43 @@ import (
 	"sync"
 )
 
-func (s *Service) SumPayments(goroutines int) types.Money {
-	var sumPayments types.Money = 0
-	if goroutines <= 1 {
-		for _, payment := range s.payments {
-			sumPayments += payment.Amount
-		}
-	} else {
-		l := 0
-		mu := sync.Mutex{}
-		n := len(s.payments)
-		wg := sync.WaitGroup{}
-		wg.Add((n + goroutines - 1) / goroutines)
-		for _, r := range DelN(n, goroutines) {
-			go func(payments []*types.Payment) {
-				defer wg.Done()
-				var sum types.Money = 0
-				for _, payment := range payments {
-					sum += payment.Amount
-				}
-				mu.Lock()
-				sumPayments += sum
-				mu.Unlock()
-			}(s.payments[l:r])
-			l = r
-		}
-		wg.Wait()
-	}
-	return sumPayments
-}
+func (s *Service) SumPaymentsWithProgress() <-chan types.Progress {
+	parts := 100_000
 
-func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payment, error) {
-	var resPayments []types.Payment
-	_, err := s.FindAccountByID(accountID)
-	if err != nil {
-		return nil, err
-	}
-	if goroutines <= 1 {
-		for _, payment := range s.payments {
-			if payment.AccountID == accountID {
-				resPayments = append(resPayments, *payment)
+	l := 0
+	channels := make([]<-chan types.Progress, (len(s.payments)+parts-1)/parts)
+	for index, r := range DelN(len(s.payments), parts) { // i know that's wrong :) to use 'range' like this
+		ch := make(chan types.Progress)
+		go func(ch chan<- types.Progress, data []*types.Payment) {
+			defer close(ch)
+			result := types.Progress{}
+			result.Part = len(data)
+			for _, payment := range data {
+				result.Result += payment.Amount
 			}
-		}
-	} else {
-		l := 0
-		mu := sync.Mutex{}
-		n := len(s.payments)
-		wg := sync.WaitGroup{}
-		wg.Add((n + goroutines - 1) / goroutines)
-		for _, r := range DelN(n, goroutines) {
-			go func(payments []*types.Payment) {
-				defer wg.Done()
-				var tempPayments []types.Payment
-				for _, payment := range payments {
-					if payment.AccountID == accountID {
-						tempPayments = append(tempPayments, *payment)
-					}
-				}
-				mu.Lock()
-				resPayments = append(resPayments, tempPayments...)
-				mu.Unlock()
-			}(s.payments[l:r])
-			l = r
-		}
-		wg.Wait()
+			ch <- result
+		}(ch, s.payments[l:r])
+		channels[index] = ch
+		l = r
 	}
-	return resPayments, nil
+	return merge(channels)
 }
+func merge(channels []<-chan types.Progress) <-chan types.Progress {
+	merged := make(chan types.Progress)
+	wg := sync.WaitGroup{}
+	wg.Add(len(channels))
 
-func (s *Service) FilterPaymentsByFn(
-	filter func(payment types.Payment) bool,
-	goroutines int) ([]types.Payment, error) {
-	var resPayments []types.Payment
-	if goroutines <= 1 {
-		for _, payment := range s.payments {
-			if filter(*payment) {
-				resPayments = append(resPayments, *payment)
+	for _, ch := range channels {
+		go func(ch <-chan types.Progress) {
+			defer wg.Done()
+			for val := range ch {
+				merged <- val
 			}
-		}
-	} else {
-		l := 0
-		mu := sync.Mutex{}
-		n := len(s.payments)
-		wg := sync.WaitGroup{}
-		wg.Add((n + goroutines - 1) / goroutines)
-		for _, r := range DelN(n, goroutines) {
-			go func(payments []*types.Payment) {
-				defer wg.Done()
-				var tempPayments []types.Payment
-				for _, payment := range payments {
-					if filter(*payment) {
-						tempPayments = append(tempPayments, *payment)
-					}
-				}
-				mu.Lock()
-				resPayments = append(resPayments, tempPayments...)
-				mu.Unlock()
-			}(s.payments[l:r])
-			l = r
-		}
+		}(ch)
+	}
+	go func() {
+		defer close(merged)
 		wg.Wait()
-	}
-	if resPayments == nil {
-		return nil, ErrPaymentNotFound
-	}
-	return resPayments, nil
+	}()
+	return merged
 }

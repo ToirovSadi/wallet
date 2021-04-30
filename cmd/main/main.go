@@ -1,19 +1,34 @@
 package main
 
 import (
-	"fmt"
 	"github.com/ToirovSadi/wallet/pkg/wallet"
 	"log"
 )
 
 func main() {
 
-	l := 0
-	for _, x := range wallet.DelN(10, 3) {
-		fmt.Print("[", l, ", ", x, ")\n")
-		l = x
+	s := wallet.Service{}
+
+	_, err := s.RegisterAccount("+111")
+	if err != nil {
+		log.Print(err)
+		return
 	}
-	fmt.Println()
+	err = s.Deposit(1, 100000)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	for i := 0; i < 100; i++ {
+		_, err = s.Pay(1, 1, "fot nothing")
+		if err != nil {
+			log.Print(err)
+			return
+		}
+	}
+	for total := range s.SumPaymentsWithProgress() {
+		log.Print(total)
+	}
 
 	//
 	//s := wallet.Service{}
